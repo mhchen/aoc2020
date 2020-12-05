@@ -12,5 +12,7 @@ module.exports = {
   plugins: ['@typescript-eslint'],
   rules: {
     'no-restricted-syntax': 0,
+    'no-continue': 0,
+    'no-param-reassign': 0,
   },
 };
