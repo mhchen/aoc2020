@@ -14,5 +14,6 @@ module.exports = {
     'no-restricted-syntax': 0,
     'no-continue': 0,
     'no-param-reassign': 0,
+    'class-methods-use-this': 0,
   },
 };
