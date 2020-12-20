@@ -4,7 +4,11 @@ type GridData<T> = Map<number, Row<T>>;
 export default class Grid<T extends string> {
   private data: GridData<T> = new Map();
 
+  minX = 0;
+
   maxX = 0;
+
+  minY = 0;
 
   maxY = 0;
 
@@ -19,8 +23,14 @@ export default class Grid<T extends string> {
     if (x > this.maxX) {
       this.maxX = x;
     }
+    if (x < this.minX) {
+      this.minX = x;
+    }
     if (y > this.maxY) {
       this.maxY = y;
+    }
+    if (y < this.minY) {
+      this.minY = y;
     }
   }
 
@@ -42,8 +52,8 @@ export default class Grid<T extends string> {
   }
 
   print() {
-    for (let y = 0; y <= this.maxY; y++) {
-      for (let x = 0; x <= this.maxX; x++) {
+    for (let y = this.minY; y <= this.maxY; y++) {
+      for (let x = this.minX; x <= this.maxX; x++) {
         process.stdout.write(this.get(x, y)!.toString() || '.');
       }
       process.stdout.write('\n');
