@@ -2,9 +2,9 @@ import parseLinesFromInputFile from '../utils/parseLinesFromInputFile';
 
 const lines = parseLinesFromInputFile(`${__dirname}/input`);
 
-type RulePair = [RuleIndexes, RuleIndexes];
-
 type RuleIndexes = number[];
+
+type RulePair = [RuleIndexes, RuleIndexes];
 
 type RuleValue = RuleIndexes | RulePair | string;
 
@@ -13,9 +13,11 @@ type Rule = {
   value: RuleValue;
 };
 
-const expandedRuleMap = new Map<number, Set<string>>();
+let maxLineLength = 0;
 
 const rules = new Map<number, Rule>();
+
+const expandedRules = new Map<number, string[]>();
 
 function parseRuleString(ruleString: string, index: number): Rule {
   const tokens = ruleString.split(' ');
@@ -41,21 +43,20 @@ function parseRuleString(ruleString: string, index: number): Rule {
   };
 }
 
-function getRuleFromIndex(index: number) {
-  return rules.get(index);
-}
-
 function expandRuleFromIndex(index: number) {
   // eslint-disable-next-line no-use-before-define
-  return expandRule(getRuleFromIndex(index)!);
+  return expandRule(rules.get(index)!);
 }
 
 function expandSingleRuleIndexes(indexes: number[]) {
   let strings: string[] = expandRuleFromIndex(indexes[0]);
   for (const ruleIndex of indexes.slice(1)) {
     const newStrings: string[] = [];
-    const stringSegments = expandRuleFromIndex(ruleIndex);
     for (const string of strings) {
+      if (string.length >= maxLineLength) {
+        continue;
+      }
+      const stringSegments = expandRuleFromIndex(ruleIndex);
       for (const stringSegment of stringSegments) {
         newStrings.push(string.concat(stringSegment));
       }
@@ -74,13 +75,19 @@ function expandRule({ index, value }: Rule): string[] {
     return [value];
   }
 
-  if (isRulePair(value)) {
-    return [
-      ...expandSingleRuleIndexes(value[0]),
-      ...expandSingleRuleIndexes(value[1]),
-    ];
+  if (expandedRules.has(index)) {
+    return expandedRules.get(index)!;
   }
-  return expandSingleRuleIndexes(value);
+
+  const strings = isRulePair(value)
+    ? [
+        ...expandSingleRuleIndexes(value[0]),
+        ...expandSingleRuleIndexes(value[1]),
+      ]
+    : expandSingleRuleIndexes(value);
+
+  expandedRules.set(index, strings);
+  return strings;
 }
 
 let emptyLineIndex: number | null = null;
@@ -99,12 +106,64 @@ for (const [i, line] of lines.entries()) {
   continue;
 }
 
+for (const line of lines.slice(emptyLineIndex! + 1)) {
+  if (line.length > maxLineLength) {
+    maxLineLength = line.length;
+  }
+}
+
 const stringSet = new Set(expandRule(rules.get(0)!));
+
+const stringSet42 = new Set(expandRule(rules.get(42)!));
+
+const stringSet31 = new Set(expandRule(rules.get(31)!));
 
 let matchedStrings = 0;
 for (const line of lines.slice(emptyLineIndex! + 1)) {
-  if (stringSet.has(line)) {
-    matchedStrings++;
+  let transformedLine = line;
+  let removed42s = 0;
+  let removed31s = 0;
+  while (true) {
+    let removed = false;
+    for (const string42 of stringSet42) {
+      if (transformedLine.startsWith(string42)) {
+        transformedLine = transformedLine.replace(
+          new RegExp(`^${string42}`),
+          '',
+        );
+        removed42s++;
+        removed = true;
+      }
+    }
+    if (!removed) {
+      break;
+    }
   }
+  while (true) {
+    let removed = false;
+    for (const string31 of stringSet31) {
+      if (transformedLine.endsWith(string31)) {
+        transformedLine = transformedLine.replace(
+          new RegExp(`${string31}$`),
+          '',
+        );
+        removed31s++;
+        removed = true;
+      }
+    }
+    if (!removed) {
+      break;
+    }
+  }
+  if (transformedLine) {
+    continue;
+  }
+  if (removed42s < 2 || removed31s < 1) {
+    continue;
+  }
+  if (removed31s >= removed42s) {
+    continue;
+  }
+  matchedStrings++;
 }
 console.log(matchedStrings);
