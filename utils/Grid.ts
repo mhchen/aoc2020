@@ -1,7 +1,7 @@
 type Row<T> = Map<number, T>;
 type GridData<T> = Map<number, Row<T>>;
 
-export default class Grid<T extends string> {
+export default class Grid<T> {
   private data: GridData<T> = new Map();
 
   minX = 0;
@@ -54,7 +54,7 @@ export default class Grid<T extends string> {
   print() {
     for (let y = this.minY; y <= this.maxY; y++) {
       for (let x = this.minX; x <= this.maxX; x++) {
-        process.stdout.write(this.get(x, y)!.toString() || '.');
+        process.stdout.write(String(this.get(x, y)) || '.');
       }
       process.stdout.write('\n');
     }
